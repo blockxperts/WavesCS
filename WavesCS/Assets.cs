@@ -6,12 +6,34 @@
         public string Id { get; }
         public string Name { get; }
         public byte Decimals { get; }
-
         public string IdOrNull => Id == "WAVES" ? null : Id;
-
         public byte[] Script { get; set; }
+        public long IssueHeight { get; }
+        public long IssueTimestamp { get; }
+        public string Issuer { get; }
+        public string Description { get; }
+        public bool Reissuable { get;  }
+        public decimal Quantity { get; }
+        public decimal MinSponsoredAssetFee { get; }
 
         private readonly decimal _scale;
+
+        public Asset(string id, string name, byte decimals,
+            long issueHeight, long issueTimestamp, string issuer, string description, bool reissuable, long quantity, long minSponsoredAssetFee, 
+            byte[] script = null)
+        {
+            Id = id;
+            Name = name;
+            Decimals = decimals;
+            Script = script;
+            _scale = new decimal(1, 0, 0, false, decimals);
+            IssueHeight = issueHeight;
+            IssueTimestamp = issueTimestamp;
+            Issuer = issuer;
+            Description = description;
+            Quantity = LongToAmount(quantity);
+            MinSponsoredAssetFee = LongToAmount(minSponsoredAssetFee);
+        }
 
         public Asset(string id, string name, byte decimals, byte[] script = null)
         {

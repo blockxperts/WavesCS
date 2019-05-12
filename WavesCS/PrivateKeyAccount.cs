@@ -24,6 +24,9 @@ namespace WavesCS
         public byte[] PrivateKey => _privateKey.ToArray();
         public byte[] PublicKey => _publicKey.ToArray();
 
+        public String privateKey => Base58.Encode(_privateKey);
+        public String publicKey => Base58.Encode(_publicKey);
+
         private static List<string> _seedWords;
 
         public string Address { get; }

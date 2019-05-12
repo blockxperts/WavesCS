@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Collections.Specialized;
 using System.Globalization;
 using System.Linq;
@@ -12,9 +13,11 @@ namespace WavesCS
     {
         public const string TestNetHost = "https://testnodes.wavesnodes.com";
         public const string MainNetHost = "https://nodes.wavesnodes.com";
+        public const string CustomHost = "";
 
         public const char TestNetChainId = 'T';
         public const char MainNetChainId = 'W';
+        public const char CustomChainId = 'W';
 
         private readonly string _host;
         public char ChainId;
@@ -148,7 +151,15 @@ namespace WavesCS
                 var scripted = assetDetails.ContainsKey("scripted") && assetDetails.GetBool("scripted");
 
                 var script = scripted ? assetDetails.GetString("scriptDetails.script").FromBase64() : null;
-                asset = new Asset(assetId, tx.GetString("name"), tx.GetByte("decimals"), script);
+
+                // Generate Asset
+                asset = new Asset(assetId, tx.GetString("name"), tx.GetByte("decimals"),
+                    assetDetails.GetLong("issueHeight"), assetDetails.GetLong("issueTimestamp"),
+                    assetDetails.GetString("issuer"),
+                    assetDetails["description"] == null ? "" : assetDetails.GetString("description"),
+                    assetDetails.GetBool("reissuable"), assetDetails.GetLong("quantity"), 
+                    assetDetails["minSponsoredAssetFee"] == null ? 0 : assetDetails.GetLong("minSponsoredAssetFee"),
+                    script);
                 AssetsCache[assetId] = asset;
             }
 
