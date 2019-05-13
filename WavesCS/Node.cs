@@ -92,7 +92,12 @@ namespace WavesCS
             else
                 return GetObject($"assets/balance/{address}/{asset.Id}").GetDecimal("balance", asset);
         }
-        
+
+        public Boolean isValidAddress(string address)
+        {
+            return GetObject($"addresses/validate/{address}").GetBool("valid");
+        }
+
         public Dictionary<Asset, decimal> GetAssetBalances(string address)
         {
             return GetObject($"assets/balance/{address}")
@@ -129,7 +134,8 @@ namespace WavesCS
         public DictionaryObject GetAddressData(string address)
         {
             return GetObjects("addresses/data/{0}", address)
-                .ToDictionary(o => o.GetString("key"), DataValue);
+                .ToLookup(o => o.GetString("key"), DataValue)
+                .ToDictionary(d => d.Key, d => d.First());
         }
 
         public Asset GetAsset(string assetId)
