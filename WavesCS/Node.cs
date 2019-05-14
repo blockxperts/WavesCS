@@ -307,7 +307,7 @@ namespace WavesCS
         public string Transfer(PrivateKeyAccount sender, string recipient, Asset asset, decimal amount, string message = "")
         {
             var tx = new TransferTransaction(ChainId, sender.PublicKey, recipient, asset, amount, message);
-            tx.CalculateFee(asset, sender, this, null);
+            tx.Fee = CalculateFee(tx, asset, sender, this);
             tx.Sign(sender);
             return Broadcast(tx);
         }
@@ -316,7 +316,7 @@ namespace WavesCS
                                decimal fee, Asset feeAsset = null, byte[] message = null)
         {
             var tx = new TransferTransaction(ChainId, sender.PublicKey, recipient, asset, amount, fee, feeAsset, message);
-            tx.CalculateFee(feeAsset ?? asset, sender, this, fee);
+            tx.Fee = CalculateFee(tx, feeAsset ?? asset, sender, this, fee);
             tx.Sign(sender);
             return Broadcast(tx);
         }
@@ -325,7 +325,6 @@ namespace WavesCS
             string message = "", decimal? fee = null)
         {
             var tx = new MassTransferTransaction(ChainId, sender.PublicKey, asset, transfers, message, fee);
-            tx.CalculateFee(asset, sender, this, fee);
             tx.Sign(sender);
             return Broadcast(tx);
         }
@@ -347,7 +346,6 @@ namespace WavesCS
             file.Close();
             
             var tx = new MassTransferTransaction(ChainId, sender.PublicKey, asset, transfers, message, fee);
-            tx.CalculateFee(asset, sender, this, fee);
             tx.Sign(sender);
             return Broadcast(tx);
         }
@@ -531,15 +529,24 @@ namespace WavesCS
             return Http.GetFlatObjects($"{_host}/transactions/address/{address}/limit/{limit}");
         }
 
-        public decimal CalculateFee(Transaction transaction)
+        public long CalculateFee(Transaction transaction)
         {
-            var response =  Http.Post($"{_host}/transactions/calculateFee", transaction.GetJsonWithSignature()).ParseJsonObject().GetInt("feeAmount");
+            var response =  Http.Post($"{_host}/transactions/calculateFee", transaction.GetJsonWithSignature()).ParseJsonObject().GetLong("feeAmount");
             return response;
         }
 
         public string CalculateFee(DictionaryObject transaction)
         {
             return Http.Post($"{_host}/transactions/calculateFee", transaction);
+        }
+
+        public decimal CalculateFee(TransferTransaction transaction, Asset asset, PrivateKeyAccount sender, Node node, decimal? fee = null)
+        {
+            decimal defaultFee = 0.001m;
+            decimal baseFee = fee ?? defaultFee;
+            decimal extraFee = asset.Script != null ? 0.004m : node.GetAddressExtraFee(sender.Address);
+            decimal txnFee = Math.Max(asset.LongToAmount(node.CalculateFee(transaction)), defaultFee + extraFee);
+            return Math.Max(txnFee, baseFee);
         }
     }
 }
