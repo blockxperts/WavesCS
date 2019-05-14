@@ -112,6 +112,16 @@ namespace WavesCS
 
     public static class TransactionExtensons
     {
+        public static T CalculateFee<T>(this T transaction, Asset asset, PrivateKeyAccount sender, Node node, decimal? fee = null) where T : Transaction
+        {
+            decimal defaultFee = 0.001m;
+            decimal baseFee = fee ?? defaultFee;
+            decimal extraFee = asset.Script != null ? 0.004m : node.GetAddressExtraFee(sender.Address);
+            decimal txnFee = Math.Max(node.CalculateFee(transaction), defaultFee + extraFee);
+            transaction.Fee = Math.Max(txnFee, baseFee);
+            return transaction;
+        }
+
         public static T Sign<T>(this T transaction, PrivateKeyAccount account, int proofIndex = 0) where T : Transaction
         {
             transaction.Proofs[proofIndex] = account.Sign(transaction.GetBody());

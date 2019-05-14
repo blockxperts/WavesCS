@@ -138,6 +138,11 @@ namespace WavesCS
                 .ToDictionary(d => d.Key, d => d.First());
         }
 
+        public decimal GetAddressExtraFee(string address)
+        {
+            return GetObject($"addresses/scriptInfo/{address}").GetDecimal("extraFee", Assets.WAVES);
+        }
+
         public Asset GetAsset(string assetId)
         {
             if (assetId == Assets.WAVES.Id || assetId == null)
@@ -299,11 +304,10 @@ namespace WavesCS
             return transactions;
         }
 
-        public string Transfer(PrivateKeyAccount sender, string recipient, Asset asset, decimal amount,
-            string message = "")
+        public string Transfer(PrivateKeyAccount sender, string recipient, Asset asset, decimal amount, string message = "")
         {
-            var fee = 0.001m + (asset.Script != null ?  0.004m : 0);
             var tx = new TransferTransaction(ChainId, sender.PublicKey, recipient, asset, amount, message);
+            tx.CalculateFee(asset, sender, this, null);
             tx.Sign(sender);
             return Broadcast(tx);
         }
@@ -311,7 +315,8 @@ namespace WavesCS
         public string Transfer(PrivateKeyAccount sender, string recipient, Asset asset, decimal amount,
                                decimal fee, Asset feeAsset = null, byte[] message = null)
         {
-            var tx = new TransferTransaction(ChainId, sender.PublicKey, recipient, asset, amount, fee, feeAsset, message);           
+            var tx = new TransferTransaction(ChainId, sender.PublicKey, recipient, asset, amount, fee, feeAsset, message);
+            tx.CalculateFee(feeAsset ?? asset, sender, this, fee);
             tx.Sign(sender);
             return Broadcast(tx);
         }
@@ -320,6 +325,7 @@ namespace WavesCS
             string message = "", decimal? fee = null)
         {
             var tx = new MassTransferTransaction(ChainId, sender.PublicKey, asset, transfers, message, fee);
+            tx.CalculateFee(asset, sender, this, fee);
             tx.Sign(sender);
             return Broadcast(tx);
         }
@@ -341,6 +347,7 @@ namespace WavesCS
             file.Close();
             
             var tx = new MassTransferTransaction(ChainId, sender.PublicKey, asset, transfers, message, fee);
+            tx.CalculateFee(asset, sender, this, fee);
             tx.Sign(sender);
             return Broadcast(tx);
         }

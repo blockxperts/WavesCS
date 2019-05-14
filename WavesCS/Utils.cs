@@ -9,9 +9,8 @@ namespace WavesCS
         public static void WriteLong(this BinaryWriter writer, long n)
         {
             n = System.Net.IPAddress.HostToNetworkOrder(n);
-            writer.Write(n);            
+            writer.Write(n);
         }
-
         public static void WriteInt(this BinaryWriter writer, int n)
         {
             n = System.Net.IPAddress.HostToNetworkOrder(n);
@@ -111,6 +110,11 @@ namespace WavesCS
         public static long ToLong(this DateTime date)
         {
             return (date - new DateTime(1970, 1, 1)).Ticks / (TimeSpan.TicksPerSecond / 1000);             
+        }
+
+        public static byte[] ToByteArray(this string data)
+        {
+            return Encoding.UTF8.GetBytes(data);
         }
 
         public static string ToBase64(this byte[] data)
